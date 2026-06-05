@@ -1,113 +1,265 @@
-# AttendWise
+# 🎓 AttendWise
 
-A modern attendance tracking and prediction platform for college students. Track daily attendance, predict safe skips, and stay above your target with beautiful analytics.
+> Smart Attendance Tracking System for Students
 
-## Features
+AttendWise is a modern full-stack attendance management platform designed to help students track attendance, monitor subject-wise performance, and stay above their target attendance percentage with real-time insights.
 
-- Manual daily attendance marking (Present / Absent / No Class)
-- Subject management with configurable attendance weights
-- Overall and subject-wise attendance calculations
-- Prediction engine (classes needed / safe to skip)
-- What-if calculator
-- Monthly calendar view with color-coded history
-- Attendance history with filters, edit, and delete
-- Advanced analytics (pie, bar, line charts)
-- CSV & Excel export / CSV import
-- Dark / light mode with theme toggle
-- Fully responsive (desktop + mobile bottom nav)
-- Secure authentication with Better Auth
+Built using Next.js, TypeScript, Prisma, Neon PostgreSQL, Better Auth, and Vercel.
 
-## Tech Stack
+---
 
-- **Frontend:** Next.js 15+ (App Router), TypeScript, Tailwind CSS, shadcn/ui, Framer Motion, Recharts
-- **Backend:** Next.js API Routes & Server Actions
-- **Auth:** Better Auth
-- **Database:** PostgreSQL (Neon)
-- **ORM:** Prisma
-- **Deployment:** Vercel
+## ✨ Features
 
-## Getting Started
+### 🔐 Authentication
+- Secure user registration and login
+- Session-based authentication with Better Auth
+- Protected routes and user-specific data
 
-### 1. Clone and install
+### 📚 Subject Management
+- Add unlimited subjects
+- Edit or delete subjects anytime
+- Custom subject names
+- Configurable attendance weight per class
+  - Theory class = 1 point
+  - Practical class = 2 points
+  - Fully customizable
+
+### 📅 Daily Attendance Tracking
+Mark attendance for each subject every day:
+
+| Status | Meaning |
+|----------|----------|
+| ✅ Present | Attended class |
+| ❌ Absent | Missed class |
+| ⚪ No Class | Class was not conducted |
+
+### 📊 Attendance Analytics
+- Overall attendance percentage
+- Subject-wise attendance percentage
+- Visual progress indicators
+- Attendance trend analysis
+
+### 🎯 Smart Attendance Prediction
+Set your target attendance percentage and instantly see:
+
+#### If attendance is below target:
+- Number of classes required to reach the target
+
+#### If attendance is above target:
+- Number of classes that can be skipped safely
+
+### 📆 Attendance Calendar
+- Monthly attendance view
+- Quick attendance overview
+- Historical tracking
+
+### 📈 What-If Calculator
+Simulate future attendance scenarios:
+
+- What happens if I attend the next 5 classes?
+- What happens if I miss the next 3 classes?
+- Predict future attendance percentages instantly
+
+### 📜 Attendance History
+- Complete attendance records
+- Subject filtering
+- Date filtering
+- Attendance review
+
+### ⚙️ Settings
+- Dark Mode
+- Light Mode
+- Attendance target customization
+- Data management options
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- Radix UI
+
+### Backend
+- Next.js Server Actions
+- Better Auth
+- Prisma ORM
+
+### Database
+- Neon PostgreSQL
+
+### Deployment
+- Vercel
+
+---
+
+## 📂 Project Structure
+
+```bash
+app/
+├── (auth)/
+├── (dashboard)/
+├── api/
+├── attendance/
+├── analytics/
+├── calendar/
+├── settings/
+└── subjects/
+
+components/
+├── analytics/
+├── attendance/
+├── auth/
+├── calendar/
+├── dashboard/
+├── history/
+├── layout/
+├── settings/
+└── ui/
+
+actions/
+├── attendance.ts
+├── dashboard.ts
+├── settings.ts
+└── subjects.ts
+
+lib/
+├── auth.ts
+├── auth-client.ts
+├── prisma.ts
+└── session.ts
+
+prisma/
+└── schema.prisma
+```
+
+---
+
+## 🚀 Getting Started
+
+### Clone Repository
+
+```bash
+git clone https://github.com/raihanali-dev/AttendWise.git
+cd AttendWise
+```
+
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Environment variables
+### Configure Environment Variables
 
-Copy `.env.example` to `.env` and fill in:
+Create a `.env` file:
 
 ```env
-DATABASE_URL="postgresql://user:password@host:5432/attendwise?sslmode=require"
-BETTER_AUTH_SECRET="generate-a-secure-random-string-at-least-32-chars"
-BETTER_AUTH_URL="http://localhost:3000"
+DATABASE_URL=your_neon_database_url
+
+BETTER_AUTH_SECRET=your_secret_key
+
+BETTER_AUTH_URL=http://localhost:3000
 ```
 
-Generate a secret:
-
-```bash
-openssl rand -base64 32
-```
-
-### 3. Database setup
+### Generate Prisma Client
 
 ```bash
 npx prisma generate
+```
+
+### Run Database Migrations
+
+```bash
 npx prisma migrate deploy
 ```
 
-For local development with a new database:
-
-```bash
-npx prisma migrate dev
-```
-
-### 4. Run development server
+### Start Development Server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-## Deploy to Vercel
-
-1. Push to GitHub
-2. Import project in Vercel
-3. Add environment variables:
-   - `DATABASE_URL` — Neon PostgreSQL connection string
-   - `BETTER_AUTH_SECRET` — secure random string (32+ chars)
-   - `BETTER_AUTH_URL` — your production URL (e.g. `https://attendwise.vercel.app`)
-4. Deploy
-
-Run migrations against production:
+Open:
 
 ```bash
-npx prisma migrate deploy
+http://localhost:3000
 ```
 
-## Project Structure
+---
 
-```
-app/              # Next.js App Router pages
-components/       # UI and feature components
-lib/              # Auth, Prisma, validations
-actions/          # Server actions
-utils/            # Attendance logic, import/export
-types/            # TypeScript types
-prisma/           # Schema and migrations
-hooks/            # Custom React hooks
+## 🌐 Live Demo
+
+**Production URL**
+
+```text
+https://attend-wise-liard.vercel.app
 ```
 
-## Attendance Logic
+---
 
-| Status   | Attended | Conducted |
-|----------|----------|-----------|
-| Present  | +weight  | +weight   |
-| Absent   | +0       | +weight   |
-| No Class | +0       | +0        |
+## 💡 Why AttendWise?
 
-## License
+Many students calculate attendance manually using calculators, spreadsheets, or rough estimates.
 
-MIT
+AttendWise automates the entire process by providing:
+
+- Accurate attendance tracking
+- Attendance forecasting
+- Subject-wise analytics
+- Safe skip calculations
+- Attendance recovery planning
+
+All in one modern dashboard.
+
+---
+
+## 🔮 Future Enhancements
+
+- Attendance reminders
+- Timetable integration
+- Excel export/import
+- Custom attendance reports
+- PWA support
+- Multi-device synchronization
+- Notification system
+
+---
+
+## 👨‍💻 Developer
+
+### Raihan Ali
+
+CSE AIML Student
+
+- AI
+- Full Stack Development
+- Cloud Computing
+- Machine Learning
+
+GitHub:
+https://github.com/raihanali-dev
+
+---
+
+## ⭐ Support
+
+If you found this project useful:
+
+⭐ Star the repository
+
+🍴 Fork the project
+
+🛠 Contribute improvements
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+Built with ❤️ using Next.js, Prisma, Neon PostgreSQL, Better Auth, and Vercel.
