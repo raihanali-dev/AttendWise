@@ -8,20 +8,17 @@ import { validateImportCSV } from "@/utils/import";
 import { parseDateKey } from "@/lib/utils";
 import type { AttendanceStatus } from "@prisma/client";
 
+export async function getUserSettingsByUserId(userId: string) {
+  return prisma.userSettings.upsert({
+    where: { userId },
+    create: { userId },
+    update: {},
+  });
+}
+
 export async function getUserSettings() {
   const session = await requireAuth();
-
-  let settings = await prisma.userSettings.findUnique({
-    where: { userId: session.user.id },
-  });
-
-  if (!settings) {
-    settings = await prisma.userSettings.create({
-      data: { userId: session.user.id },
-    });
-  }
-
-  return settings;
+  return getUserSettingsByUserId(session.user.id);
 }
 
 export async function updateUserSettings(data: unknown) {

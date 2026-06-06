@@ -1,8 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/session";
-import { getUserSettings } from "@/actions/settings";
+import { getUserSettingsByUserId } from "@/actions/settings";
 import {
   calculateStatsFromEntries,
   calculatePrediction,
@@ -10,21 +9,29 @@ import {
 import type { SubjectWithStats, MonthlySummary, TrendPoint } from "@/types";
 import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths } from "date-fns";
 
-export async function getDashboardData() {
-  const session = await requireAuth();
-  const settings = await getUserSettings();
-
-  const [subjects, entries] = await Promise.all([
+export async function getDashboardDataByUserId(userId: string) {
+  const [settings, subjects, entries] = await Promise.all([
+    getUserSettingsByUserId(userId),
     prisma.subject.findMany({
-      where: { userId: session.user.id },
+      where: { userId },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        attendanceWeight: true,
+      },
       orderBy: { createdAt: "asc" },
     }),
     prisma.attendanceEntry.findMany({
       where: {
-        userId: session.user.id,
+        userId,
         status: { not: "NO_CLASS" },
       },
-      include: { subject: true },
+      select: {
+        subjectId: true,
+        status: true,
+        weightUsed: true,
+      },
       orderBy: { date: "asc" },
     }),
   ]);
@@ -35,8 +42,15 @@ export async function getDashboardData() {
 
   const overallPrediction = calculatePrediction(overallStats, settings.targetAttendance);
 
+  const entriesBySubject = entries.reduce((map, entry) => {
+    const bucket = map.get(entry.subjectId) ?? [];
+    bucket.push(entry);
+    map.set(entry.subjectId, bucket);
+    return map;
+  }, new Map<string, typeof entries>());
+
   const subjectsWithStats: SubjectWithStats[] = subjects.map((subject) => {
-    const subjectEntries = entries.filter((e) => e.subjectId === subject.id);
+    const subjectEntries = entriesBySubject.get(subject.id) ?? [];
     const stats = calculateStatsFromEntries(
       subjectEntries.map((e) => ({ status: e.status, weightUsed: e.weightUsed }))
     );
@@ -52,43 +66,51 @@ export async function getDashboardData() {
     };
   });
 
-  const presentCount = entries.filter((e) => e.status === "PRESENT").length;
-  const absentCount = entries.filter((e) => e.status === "ABSENT").length;
-
   return {
     settings,
     overallStats,
     overallPrediction,
     subjectsWithStats,
-    presentCount,
-    absentCount,
     totalSubjects: subjects.length,
     totalEntries: entries.length,
   };
 }
 
-export async function getAnalyticsData() {
-  const session = await requireAuth();
-  const settings = await getUserSettings();
-
-  const entries = await prisma.attendanceEntry.findMany({
-    where: {
-      userId: session.user.id,
-      status: { not: "NO_CLASS" },
-    },
-    include: { subject: true },
-    orderBy: { date: "asc" },
-  });
-
-  const subjects = await prisma.subject.findMany({
-    where: { userId: session.user.id },
-  });
+export async function getAnalyticsDataByUserId(userId: string) {
+  const [settings, entries, subjects] = await Promise.all([
+    getUserSettingsByUserId(userId),
+    prisma.attendanceEntry.findMany({
+      where: {
+        userId,
+        status: { not: "NO_CLASS" },
+      },
+      select: {
+        subjectId: true,
+        status: true,
+        weightUsed: true,
+        date: true,
+      },
+      orderBy: { date: "asc" },
+    }),
+    prisma.subject.findMany({
+      where: { userId },
+      select: { id: true, name: true, code: true, attendanceWeight: true },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
 
   const presentCount = entries.filter((e) => e.status === "PRESENT").length;
   const absentCount = entries.filter((e) => e.status === "ABSENT").length;
 
+  const entriesBySubject = entries.reduce((map, entry) => {
+    const bucket = map.get(entry.subjectId) ?? [];
+    bucket.push(entry);
+    map.set(entry.subjectId, bucket);
+    return map;
+  }, new Map<string, typeof entries>());
+
   const subjectBarData = subjects.map((subject) => {
-    const subjectEntries = entries.filter((e) => e.subjectId === subject.id);
+    const subjectEntries = entriesBySubject.get(subject.id) ?? [];
     const stats = calculateStatsFromEntries(
       subjectEntries.map((e) => ({ status: e.status, weightUsed: e.weightUsed }))
     );

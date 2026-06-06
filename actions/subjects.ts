@@ -5,12 +5,22 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/session";
 import { subjectSchema } from "@/lib/validations";
 
-export async function getSubjects() {
-  const session = await requireAuth();
+export async function getSubjectsByUserId(userId: string) {
   return prisma.subject.findMany({
-    where: { userId: session.user.id },
+    where: { userId },
+    select: {
+      id: true,
+      name: true,
+      code: true,
+      attendanceWeight: true,
+    },
     orderBy: { createdAt: "asc" },
   });
+}
+
+export async function getSubjects() {
+  const session = await requireAuth();
+  return getSubjectsByUserId(session.user.id);
 }
 
 export async function createSubject(data: unknown) {

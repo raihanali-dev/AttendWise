@@ -23,21 +23,29 @@ function revalidateAll() {
   REVALIDATE_PATHS.forEach((path) => revalidatePath(path));
 }
 
-export async function getAttendanceForDate(dateKey: string) {
-  const session = await requireAuth();
+export async function getAttendanceForDateByUserId(userId: string, dateKey: string) {
   const date = parseDateKey(dateKey);
 
   const [subjects, entries] = await Promise.all([
     prisma.subject.findMany({
-      where: { userId: session.user.id },
+      where: { userId },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        attendanceWeight: true,
+      },
       orderBy: { createdAt: "asc" },
     }),
     prisma.attendanceEntry.findMany({
       where: {
-        userId: session.user.id,
+        userId,
         date,
       },
-      include: { subject: true },
+      select: {
+        subjectId: true,
+        status: true,
+      },
     }),
   ]);
 
@@ -51,6 +59,11 @@ export async function getAttendanceForDate(dateKey: string) {
       status: (entry?.status ?? "NO_CLASS") as AttendanceStatus,
     };
   });
+}
+
+export async function getAttendanceForDate(dateKey: string) {
+  const session = await requireAuth();
+  return getAttendanceForDateByUserId(session.user.id, dateKey);
 }
 
 export async function markAttendance(data: unknown) {
@@ -153,8 +166,7 @@ export async function resetDay(dateKey: string) {
   return { success: true };
 }
 
-export async function getAttendanceHistory(filters: unknown) {
-  const session = await requireAuth();
+export async function getAttendanceHistoryByUserId(userId: string, filters: unknown) {
   const parsed = historyFilterSchema.safeParse(filters);
   if (!parsed.success) {
     return { records: [], total: 0, page: 1, pageSize: 20, totalPages: 0 };
@@ -168,7 +180,7 @@ export async function getAttendanceHistory(filters: unknown) {
     date?: { gte?: Date; lte?: Date };
     status?: { not: "NO_CLASS" };
   } = {
-    userId: session.user.id,
+    userId,
     status: { not: "NO_CLASS" },
   };
 
@@ -201,6 +213,11 @@ export async function getAttendanceHistory(filters: unknown) {
     pageSize,
     totalPages: Math.ceil(total / pageSize),
   };
+}
+
+export async function getAttendanceHistory(filters: unknown) {
+  const session = await requireAuth();
+  return getAttendanceHistoryByUserId(session.user.id, filters);
 }
 
 export async function updateAttendanceEntry(id: string, status: AttendanceStatus) {
@@ -242,19 +259,20 @@ export async function deleteAttendanceEntry(id: string) {
   return { success: true };
 }
 
-export async function getCalendarData(year: number, month: number) {
-  const session = await requireAuth();
-
+export async function getCalendarDataByUserId(userId: string, year: number, month: number) {
   const startDate = new Date(year, month, 1);
   const endDate = new Date(year, month + 1, 0);
 
   const entries = await prisma.attendanceEntry.findMany({
     where: {
-      userId: session.user.id,
+      userId,
       date: { gte: startDate, lte: endDate },
       status: { not: "NO_CLASS" },
     },
-    include: { subject: true },
+    select: {
+      date: true,
+      status: true,
+    },
     orderBy: { date: "asc" },
   });
 
@@ -276,6 +294,11 @@ export async function getCalendarData(year: number, month: number) {
   }
 
   return Object.fromEntries(dayMap);
+}
+
+export async function getCalendarData(year: number, month: number) {
+  const session = await requireAuth();
+  return getCalendarDataByUserId(session.user.id, year, month);
 }
 
 export async function getAllAttendanceForExport() {
